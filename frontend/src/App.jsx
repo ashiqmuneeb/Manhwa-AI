@@ -21,43 +21,52 @@ function App() {
 
   return (
     <div className="app-root" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Navigation Header */}
-      <header className="glass-panel" style={{
-        margin: '16px',
-        padding: '12px 24px',
+      {/* Real-World Studio Executive Console Header */}
+      <header style={{
+        margin: '16px 24px',
+        padding: '14px 28px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderRadius: '12px',
-        zIndex: 50,
-        background: 'hsla(225, 20%, 10%, 0.7)'
+        borderRadius: '10px',
+        background: 'linear-gradient(180deg, #242226 0%, #161518 100%)',
+        border: '1.5px solid #3d3b42',
+        boxShadow: '0 10px 28px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.15)',
+        position: 'relative',
+        zIndex: 50
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={handleReturnToUpload}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }} onClick={handleReturnToUpload}>
           <div style={{
-            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            padding: '8px',
+            background: 'linear-gradient(135deg, #8b5cf6 0%, #4f46e5 100%)',
+            padding: '10px',
             borderRadius: '8px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 15px var(--primary-glow)'
+            boxShadow: '0 0 18px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255,255,255,0.4)',
+            border: '1px solid #c084fc'
           }}>
-            <BookOpen size={20} color="#fff" />
+            <BookOpen size={22} color="#fff" />
           </div>
           <div>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              ManhwaAI <span style={{ 
-                fontSize: '11px', 
-                background: 'rgba(255,255,255,0.08)', 
-                padding: '2px 6px', 
+            <h1 style={{ fontSize: '19px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.02em', color: '#f3f4f6' }}>
+              MANHWA AI <span style={{ 
+                fontSize: '10px', 
+                background: 'rgba(139, 92, 246, 0.2)', 
+                padding: '2px 8px', 
                 borderRadius: '4px',
-                color: 'var(--accent-blue)',
-                border: '1px solid rgba(255,255,255,0.1)'
-              }}>v1.0</span>
+                color: '#c4b5fd',
+                fontWeight: 700,
+                border: '1px solid rgba(139, 92, 246, 0.4)',
+                letterSpacing: '0.05em'
+              }}>STUDIO v2.0</span>
             </h1>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Novel to Comic Engine</span>
+            <span style={{ fontSize: '11px', color: '#9ca3af', fontWeight: 500, letterSpacing: '0.04em' }}>
+              Full-Story Semantic Director & Action Webtoon Engine
+            </span>
           </div>
         </div>
+
 
         {viewState === 'reader' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

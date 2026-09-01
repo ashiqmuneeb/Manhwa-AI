@@ -75,13 +75,29 @@ def init_sqlite_db():
                 image_url TEXT,
                 status TEXT DEFAULT 'pending',
                 error_message TEXT,
+                panel_type TEXT DEFAULT 'action_scene',
+                bubble_type TEXT DEFAULT 'smooth',
+                sfx_text TEXT DEFAULT '',
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (chapter_id) REFERENCES chapters (id) ON DELETE CASCADE
             )
         """)
+
+        # Add new action manhwa columns if table already existed
+        for col_def in [
+            "panel_type TEXT DEFAULT 'action_scene'",
+            "bubble_type TEXT DEFAULT 'smooth'",
+            "sfx_text TEXT DEFAULT ''"
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE scenes ADD COLUMN {col_def}")
+            except Exception:
+                pass
+
         conn.commit()
         conn.close()
         logger.info("SQLite database tables verified/created successfully.")
+
     except Exception as e:
         logger.error(f"Failed to initialize SQLite tables: {e}", exc_info=True)
 

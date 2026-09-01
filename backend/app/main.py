@@ -6,6 +6,7 @@ import logging
 import io
 import os
 from contextlib import asynccontextmanager
+import pypdf
 from pypdf import PdfReader
 import json
 import uuid
@@ -129,6 +130,55 @@ def split_text_into_chapters(text: str) -> list:
         chapters = [{"title": "Chapter 1", "content": text.strip()}]
         
     return chapters
+
+def chunk_into_story_scenes(text: str) -> list:
+    """
+    Intelligently merges broken lines and groups narrative fragments into cohesive story scenes.
+    Combines character dialogue with its immediate narrative reaction.
+    """
+    raw_lines = [line.strip() for line in text.split("\n") if line.strip()]
+    if not raw_lines:
+        return []
+
+    # Step 1: Reconstruct broken lines (lines that were split mid-sentence)
+    merged_lines = []
+    current_buf = ""
+    for line in raw_lines:
+        if not current_buf:
+            current_buf = line
+        else:
+            # If current buffer doesn't end with sentence terminator and isn't closed dialogue, merge
+            if not current_buf.endswith(('.', '!', '?', '"', '”', '…', '—')):
+                current_buf += " " + line
+            else:
+                merged_lines.append(current_buf)
+                current_buf = line
+    if current_buf:
+        merged_lines.append(current_buf)
+
+    # Step 2: Group into cohesive Manhwa panels (100 to 400 chars per panel)
+    scenes = []
+    scene_buf = []
+    char_count = 0
+
+    for line in merged_lines:
+        scene_buf.append(line)
+        char_count += len(line)
+        
+        # If we have at least 150 chars or 2-3 dialogue turns, form a scene
+        if char_count >= 160 or len(scene_buf) >= 3:
+            scenes.append(" ".join(scene_buf).strip())
+            scene_buf = []
+            char_count = 0
+
+    if scene_buf:
+        if scenes and char_count < 80:
+            scenes[-1] += " " + " ".join(scene_buf).strip()
+        else:
+            scenes.append(" ".join(scene_buf).strip())
+
+    return scenes
+
 
 def is_comic_pdf(reader: PdfReader) -> bool:
     """
@@ -267,14 +317,60 @@ async def extract_text(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/story/analyze-full")
+async def analyze_full_story_endpoint(
+
+
+    raw_text: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None)
+):
+    """
+    Performs complete full-story semantic analysis, character discovery, and creates director questionnaire.
+    """
+    try:
+        extracted_text = ""
+        if file and file.filename:
+            file_bytes = await file.read()
+            filename = file.filename.lower()
+            if filename.endswith(".pdf"):
+                pdf_file = io.BytesIO(file_bytes)
+                reader = pypdf.PdfReader(pdf_file)
+                extracted_text = "\n\n".join(
+                    page.extract_text() or "" for page in reader.pages[:15]
+                )
+            elif filename.endswith(".txt") or filename.endswith(".md"):
+                extracted_text = file_bytes.decode("utf-8", errors="ignore")
+        elif raw_text:
+            extracted_text = raw_text
+
+        extracted_text = extracted_text.strip()
+        if not extracted_text:
+            raise HTTPException(status_code=400, detail="No story text provided for analysis.")
+
+        from app.gemini import analyze_full_story
+        story_plan = analyze_full_story(extracted_text)
+        story_plan["raw_text"] = extracted_text
+
+        return {
+            "success": True,
+            "data": story_plan
+        }
+    except Exception as e:
+        logger.error(f"Failed to analyze full story: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/upload")
 async def upload_novel(
+
     title: str = Form(...),
     raw_text: Optional[str] = Form(None),
     file: Optional[UploadFile] = File(None),
     max_chapters: Optional[int] = Form(1),
-    pages_json: Optional[str] = Form(None)
+    pages_json: Optional[str] = Form(None),
+    cast_profiles: Optional[str] = Form(None)
 ):
+
     """
     Receives raw novel text OR uploaded file (.txt/.pdf), parses it into chapters,
     and pushes tasks into the queue up to the specified max_chapters limit.
@@ -413,8 +509,10 @@ async def upload_novel(
             if first_chapter_id is None:
                 first_chapter_id = chapter_id
 
-            # Chunk the chapter content into paragraphs
-            paragraphs = [p.strip() for p in ch_content.split("\n") if p.strip()]
+            # Chunk the chapter content into coherent Manhwa story scenes
+            paragraphs = chunk_into_story_scenes(ch_content)
+            if not paragraphs:
+                paragraphs = [p.strip() for p in ch_content.split("\n") if p.strip()]
             
             # Safety limit: if there is only 1 chapter and it is extremely large,
             # limit the panels based on max_chapters (e.g. 5 chapters * 12 = 60 panels)
@@ -542,6 +640,25 @@ def retry_scene(scene_id: str):
     except Exception as e:
         logger.error(f"Error retrying scene: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/chapters/{chapter_id}/retry-failed")
+def retry_failed_chapter_scenes(chapter_id: str):
+    """
+    Re-queues all failed or pending scenes for a given chapter.
+    """
+    try:
+        scenes = get_chapter_scenes(chapter_id)
+        requeued_count = 0
+        for s in scenes:
+            if s.get("status") in ("failed", "pending"):
+                update_scene(s["id"], {"status": "pending", "error_message": None})
+                push_scene_task(s["id"])
+                requeued_count += 1
+        return {"success": True, "requeued": requeued_count}
+    except Exception as e:
+        logger.error(f"Error retrying failed chapter scenes: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/novels")
 def get_novels():

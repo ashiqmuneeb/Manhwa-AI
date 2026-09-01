@@ -171,6 +171,21 @@ function ReaderView({ chapterId, onBack }) {
     }
   }
 
+  // Handle retry all failed scenes
+  const handleRetryAllFailed = async () => {
+    try {
+      await axios.post(`${API_BASE}/api/chapters/${chapterId}/retry-failed`)
+      if (!pollIntervalRef.current) {
+        pollIntervalRef.current = setInterval(() => {
+          fetchScenes(false)
+        }, 3000)
+      }
+      fetchScenes(false)
+    } catch (err) {
+      console.error('Failed to retry all scenes:', err)
+    }
+  }
+
   // Handle manual left paragraph click to trigger alignment
   const handleParagraphClick = (index) => {
     setActiveIndex(index)
@@ -218,6 +233,27 @@ function ReaderView({ chapterId, onBack }) {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {progress.failed > 0 && (
+            <button 
+              onClick={handleRetryAllFailed}
+              className="btn-retry-vintage"
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px', 
+                borderColor: 'rgba(239, 68, 68, 0.6)', 
+                color: '#ef4444', 
+                padding: '6px 12px',
+                fontSize: '11px',
+                fontFamily: 'var(--font-serif)',
+                cursor: 'pointer'
+              }}
+            >
+              <AlertCircle size={12} />
+              Retry Failed ({progress.failed})
+            </button>
+          )}
+
           {progress.percentage < 100 && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a78bfa', fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '8px' }}>
               <RefreshCw size={12} className="shimmer-text" style={{ animation: 'spin 2s linear infinite' }} />
@@ -304,10 +340,21 @@ function ReaderView({ chapterId, onBack }) {
                       loading="lazy"
                     />
                     
-                    {/* Comic Speech Balloons & Narration Overlays */}
+                    {/* Comic Speech Balloons, Action Overlays & SFX */}
                     <div className="comic-overlays-container">
                       
-                      {/* Narration box at the top corner (extracts story description instead of AI prompts) */}
+                      {/* Action Speed Lines & Impact Overlays */}
+                      {scene.panel_type === 'speed_rush' && <div className="speed-lines-overlay" />}
+                      {scene.panel_type === 'impact_burst' && <div className="impact-burst-overlay" />}
+
+                      {/* Sound Effect (SFX) Action Badge (e.g. *SWOOSH!*, *BAM!*, *CRACK!*) */}
+                      {scene.sfx_text ? (
+                        <div className="comic-sfx-badge">
+                          {scene.sfx_text}
+                        </div>
+                      ) : null}
+
+                      {/* Narration box at the top corner */}
                       {(() => {
                         const narrationText = getNarrationText(scene);
                         return narrationText ? (
@@ -317,10 +364,12 @@ function ReaderView({ chapterId, onBack }) {
                         ) : null;
                       })()}
                       
-                      {/* Dialogue Bubbles overlay */}
+                      {/* Dialogue Bubbles overlay with jagged/smooth styling */}
                       {scene.dialogue ? (
                         (() => {
                           const dialogueList = scene.dialogue.split(' | ').map(d => d.trim()).filter(d => d.length > 0)
+                          const bubbleTypeClass = `bubble-type-${scene.bubble_type || 'smooth'}`
+
                           return dialogueList.map((dialogueText, dialIdx) => {
                             // Alternate bubble placement
                             const isLeft = (idx + dialIdx) % 2 === 0
@@ -328,12 +377,12 @@ function ReaderView({ chapterId, onBack }) {
                             const tailClass = isLeft ? 'bubble-tail-left' : 'bubble-tail-right'
                             
                             // Translate second bubble down slightly to prevent overlaps
-                            const bubbleStyle = dialIdx > 0 ? { transform: 'translateY(16px)' } : {}
+                            const bubbleStyle = dialIdx > 0 ? { transform: 'translateY(18px)' } : {}
                             
                             return (
                               <div 
                                 key={dialIdx}
-                                className={`comic-bubble ${posClass} ${tailClass}`}
+                                className={`comic-bubble ${posClass} ${tailClass} ${bubbleTypeClass}`}
                                 style={bubbleStyle}
                               >
                                 <span className="comic-bubble-text">{dialogueText}</span>
@@ -343,6 +392,7 @@ function ReaderView({ chapterId, onBack }) {
                         })()
                       ) : null}
                     </div>
+
                   </div>
                 )}
 

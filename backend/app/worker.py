@@ -5,6 +5,9 @@ import base64
 import logging
 import threading
 import os
+import urllib.parse
+import re
+from concurrent.futures import ThreadPoolExecutor
 from app.config import settings
 from app.database import update_scene, get_supabase, get_scene
 from app.queue import pop_scene_task
@@ -45,98 +48,94 @@ def upload_image_to_r2(image_bytes: bytes, filename: str) -> str:
             Body=image_bytes,
             ContentType='image/png'
         )
-        # Construct public URL (endpoint URL + bucket + filename or custom domain)
         endpoint = settings.R2_ENDPOINT_URL.rstrip('/')
         return f"{endpoint}/{settings.R2_BUCKET_NAME}/{filename}"
     except Exception as e:
         logger.error(f"R2 upload failed: {e}")
         return ""
 
+def generate_flux_webtoon_image(prompt: str, scene_id: str, seq_num: int = 1) -> str:
+    """
+    Generates authentic, high-quality Korean Manhwa comic panels with character consistency using FLUX.
+    Includes multi-model fallback (FLUX, Turbo) and automatic retry.
+    """
+    clean_prompt = re.sub(r'\[.*?\]', '', prompt).strip()
+    if "korean webtoon" not in clean_prompt.lower() and "manhwa" not in clean_prompt.lower():
+        clean_prompt = f"korean webtoon manhwa style, dynamic lighting, digital cel shading, crisp line art, {clean_prompt}"
+
+    seed = (seq_num * 101) % 99999
+    encoded_prompt = urllib.parse.quote(clean_prompt)
+    filename = f"scene_{scene_id}.png"
+    filepath = os.path.join(STATIC_DIR, filename)
+
+    models = ["flux", "turbo"]
+    for model in models:
+        flux_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=600&height=800&model={model}&seed={seed}&nologo=true&enhance=true"
+        for attempt in range(3):
+            try:
+                logger.info(f"Requesting character-based Manhwa image (model={model}, attempt={attempt+1}, seed={seed}) for scene {scene_id}...")
+                res = requests.get(flux_url, timeout=40)
+                if res.status_code == 200 and len(res.content) > 1000:
+                    with open(filepath, "wb") as f:
+                        f.write(res.content)
+                    logger.info(f"Successfully saved Manhwa panel ({len(res.content)} bytes): {filepath}")
+                    return f"http://localhost:8000/static/{filename}"
+                else:
+                    logger.warning(f"Generation attempt {attempt+1} returned code {res.status_code}, length {len(res.content)}")
+            except Exception as e:
+                logger.warning(f"Generation attempt {attempt+1} failed ({model}): {e}")
+                time.sleep(1.5)
+
+    raise Exception("All FLUX and Turbo image generation attempts timed out or failed.")
+
 def generate_mock_image(prompt: str, sequence_num: int, scene_id: str) -> str:
     """
-    Generates a beautiful placeholder image from Picsum or Placehold.co and saves it locally.
-    Simulates a 5-second processing delay.
+    Generates a fast real FLUX manhwa panel for mock mode so story/characters always match.
     """
-    logger.info(f"Generating mock panel for scene #{sequence_num}...")
-    time.sleep(5.0)  # 5-second simulation delay
+    return generate_flux_webtoon_image(prompt, scene_id, sequence_num)
 
-    # Use picsum with seed for deterministic beautiful cartoon/comic search
-    seed = (sequence_num * 17) % 1000
-    mock_url = f"https://picsum.photos/seed/{seed}/600/800"
-    
-    filename = f"scene_{scene_id}.png"
-    filepath = os.path.join(STATIC_DIR, filename)
-    
-    try:
-        logger.info(f"Downloading mock image locally from Picsum: {mock_url}")
-        res = requests.get(mock_url, timeout=10)
-        if res.status_code == 200:
-            with open(filepath, "wb") as f:
-                f.write(res.content)
-            logger.info(f"Saved mock image locally: {filepath}")
-            return f"http://localhost:8000/static/{filename}"
-    except Exception as e:
-        logger.error(f"Failed to download mock image: {e}. Writing local fallback placeholder.")
-        try:
-            # Write a 1x1 pixel gray PNG fallback file so the server can host a local image
-            fallback_png = (
-                b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89"
-                b"\x00\x00\x00\rIDATx\x9cc\xb0\xaf\xaf\xae\x00\x03\x00\x01\xbd\x00\xfd\x16k\xae\xab\x00\x00\x00\x00IEND\xaeB`\x82"
-            )
-            with open(filepath, "wb") as f:
-                f.write(fallback_png)
-            logger.info(f"Saved local 1x1 PNG fallback to: {filepath}")
-            return f"http://localhost:8000/static/{filename}"
-        except Exception as we:
-            logger.error(f"Failed to write offline fallback image: {we}")
+
+
+def generate_real_image(prompt: str, scene_id: str, seq_num: int = 1) -> str:
+    """
+    Tries user's custom Kaggle/GPU ngrok endpoint first.
+    If the custom endpoint is offline or fails, falls back to the online FLUX engine automatically.
+    """
+    if settings.IMAGE_GEN_URL and settings.IMAGE_GEN_URL.strip():
+        payload = {"prompt": prompt}
+        headers = {"Content-Type": "application/json"}
         
-    return mock_url
-
-
-def generate_real_image(prompt: str, scene_id: str) -> str:
-    """
-    Sends prompt to Kaggle/Stable Diffusion ngrok endpoint.
-    Retrieves and saves the output image locally.
-    """
-    if not settings.IMAGE_GEN_URL:
-        raise ValueError("IMAGE_GEN_URL (Kaggle ngrok link) is not configured.")
-
-    payload = {"prompt": prompt}
-    headers = {"Content-Type": "application/json"}
-    
-    logger.info(f"Requesting image from Kaggle endpoint: {settings.IMAGE_GEN_URL}")
-    response = requests.post(settings.IMAGE_GEN_URL, json=payload, headers=headers, timeout=120)
-    
-    if response.status_code != 200:
-        raise Exception(f"Kaggle image generator returned status code {response.status_code}: {response.text}")
-    
-    res_json = response.json()
-    filename = f"scene_{scene_id}.png"
-    filepath = os.path.join(STATIC_DIR, filename)
-    
-    # Kaggle endpoint could return {"image": "<base64_data>"} or {"image_url": "..."}
-    if "image" in res_json:
-        # Image is base64 encoded
-        img_data = base64.b64decode(res_json["image"])
-        with open(filepath, "wb") as f:
-            f.write(img_data)
-        logger.info(f"Saved generated image locally: {filepath}")
-        return f"http://localhost:8000/static/{filename}"
-        
-    elif "image_url" in res_json:
-        img_url = res_json["image_url"]
         try:
-            res = requests.get(img_url, timeout=30)
-            if res.status_code == 200:
-                with open(filepath, "wb") as f:
-                    f.write(res.content)
-                logger.info(f"Saved generated image from URL locally: {filepath}")
-                return f"http://localhost:8000/static/{filename}"
+            logger.info(f"Attempting custom GPU endpoint: {settings.IMAGE_GEN_URL}")
+            response = requests.post(settings.IMAGE_GEN_URL, json=payload, headers=headers, timeout=20)
+            
+            if response.status_code == 200:
+                res_json = response.json()
+                filename = f"scene_{scene_id}.png"
+                filepath = os.path.join(STATIC_DIR, filename)
+                
+                if "image" in res_json:
+                    img_data = base64.b64decode(res_json["image"])
+                    with open(filepath, "wb") as f:
+                        f.write(img_data)
+                    logger.info(f"Saved custom GPU generated image: {filepath}")
+                    return f"http://localhost:8000/static/{filename}"
+                    
+                elif "image_url" in res_json:
+                    img_url = res_json["image_url"]
+                    res = requests.get(img_url, timeout=20)
+                    if res.status_code == 200:
+                        with open(filepath, "wb") as f:
+                            f.write(res.content)
+                        return f"http://localhost:8000/static/{filename}"
+                    return img_url
+            else:
+                logger.warning(f"Custom GPU endpoint returned status {response.status_code}. Falling back to FLUX...")
         except Exception as e:
-            logger.error(f"Failed to download generated image from remote URL: {e}")
-        return img_url
-        
-    raise Exception("Unknown response structure from Kaggle endpoint.")
+            logger.warning(f"Custom GPU endpoint failed or timed out: {e}. Falling back to FLUX...")
+
+    # Fallback to high-speed FLUX engine
+    return generate_flux_webtoon_image(prompt, scene_id, seq_num)
 
 def process_scene(scene_id: str):
     """
@@ -165,26 +164,27 @@ def process_scene(scene_id: str):
                 "prompt_setting": analysis_results.get("prompt_setting"),
                 "prompt_actions": analysis_results.get("prompt_actions"),
                 "dialogue": analysis_results.get("dialogue"),
+                "panel_type": analysis_results.get("panel_type", "action_scene"),
+                "bubble_type": analysis_results.get("bubble_type", "smooth"),
+                "sfx_text": analysis_results.get("sfx_text", ""),
                 "image_prompt": analysis_results.get("image_prompt")
             })
             prompt = analysis_results.get("image_prompt")
             
         if not prompt:
-            prompt = "A manhwa scene, korean webtoon style"
+            prompt = "korean webtoon manhwa action style, dynamic action pose, detailed background, clean art panel"
+
             
         seq_num = scene.get("sequence_number", 1)
         
         # 2. Trigger generation
-        if settings.MOCK_IMAGE_GEN:
-            img_url = generate_mock_image(prompt, seq_num, scene_id)
-        else:
-            img_url = generate_real_image(prompt, scene_id)
+        img_url = generate_real_image(prompt, scene_id, seq_num)
             
         # 3. Update scene completion
         update_scene(scene_id, {
             "status": "completed",
             "image_url": img_url,
-            "updated_at": "now()"
+            "error_message": None
         })
         logger.info(f"Successfully generated and updated panel for scene {scene_id}.")
         
@@ -197,21 +197,24 @@ def process_scene(scene_id: str):
 
 def worker_loop():
     """
-    Infinite loop running in background thread to poll queue tasks.
+    Concurrent multi-threaded worker loop running in background.
     """
-    logger.info("Background Manhwa Queue worker started.")
+    logger.info("Background Manhwa Multi-Threaded Queue worker started (3 workers).")
+    executor = ThreadPoolExecutor(max_workers=3)
+    
     while True:
         try:
             scene_id = pop_scene_task()
             if scene_id:
-                logger.info(f"Worker picked up scene task: {scene_id}")
-                process_scene(scene_id)
+                logger.info(f"Worker dispatching scene task: {scene_id}")
+                executor.submit(process_scene, scene_id)
+                time.sleep(0.5)
             else:
-                # Sleep briefly if queue is empty
-                time.sleep(2.0)
+                time.sleep(1.0)
         except Exception as e:
             logger.error(f"Error in worker loop: {e}")
-            time.sleep(5.0)
+            time.sleep(3.0)
+
 
 def start_background_worker():
     """
