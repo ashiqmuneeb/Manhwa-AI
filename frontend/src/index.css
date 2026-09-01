@@ -1,0 +1,848 @@
+/* Skeuomorphic Theme & Real-World UI System */
+:root {
+  --font-display: 'Outfit', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Georgia', 'Merriweather', serif;
+  --font-mono: 'Courier New', monospace;
+
+  /* Theme Colors */
+  --desk-wood: #1e1510;
+  --desk-leather: #242220;
+  --paper-cream: #faf6ee;
+  --paper-shadow: rgba(40, 30, 20, 0.15);
+  
+  --phone-bezel: #121214;
+  --phone-chrome: #2e2f33;
+  --phone-screen-bg: #09090b;
+
+  --accent-ribbon: #bd2c2c;
+  --accent-ribbon-glow: rgba(189, 44, 44, 0.4);
+  
+  --text-dark: #2a2521;
+  --text-muted-dark: #6e645a;
+  
+  --text-light: #f3f4f6;
+  --text-muted-light: #9ca3af;
+  
+  --primary-purple: #8b5cf6;
+  --primary-glow: rgba(139, 92, 246, 0.3);
+}
+
+/* Global Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--desk-wood);
+  /* Physical Dark Oak Wood desk texture */
+  background-image: 
+    radial-gradient(ellipse at center, rgba(36, 26, 20, 0.9) 0%, #0c0806 100%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15) 0px, rgba(0, 0, 0, 0.15) 1px, transparent 1px, transparent 10px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 2px, transparent 2px, transparent 15px);
+  background-attachment: fixed;
+  color: var(--text-light);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-purple);
+}
+
+/* --- Skeuomorphic Desk Workspace --- */
+.desk-mat {
+  background: var(--desk-leather);
+  border: 12px solid #1a1918;
+  border-radius: 24px;
+  box-shadow: 
+    inset 0 0 40px rgba(0, 0, 0, 0.9),
+    0 15px 30px rgba(0, 0, 0, 0.7);
+  padding: 40px;
+  margin: 20px auto;
+  max-width: 860px;
+  position: relative;
+}
+
+/* Desk Stitching Detail */
+.desk-mat::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px dashed rgba(180, 150, 120, 0.15);
+  border-radius: 18px;
+  pointer-events: none;
+}
+
+/* Manuscript Paper Stack */
+.manuscript-page {
+  background-color: var(--paper-cream);
+  background-image: 
+    linear-gradient(rgba(220, 205, 185, 0.3) 1px, transparent 1px);
+  background-size: 100% 24px;
+  border-radius: 2px;
+  box-shadow: 
+    0 2px 5px var(--paper-shadow),
+    -4px 4px 0 #fff,
+    -8px 8px 0 var(--paper-cream),
+    -12px 12px 0 #e4dfd5,
+    -12px 12px 10px rgba(0,0,0,0.3);
+  padding: 40px;
+  color: var(--text-dark);
+  font-family: var(--font-serif);
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+/* Paper clip detail at the top */
+.paper-clip {
+  width: 90px;
+  height: 30px;
+  background: linear-gradient(to bottom, #d1d5db, #9ca3af);
+  border-radius: 4px;
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  border: 1px solid #6b7280;
+}
+
+.paper-clip::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 10px;
+  right: 10px;
+  height: 6px;
+  background: #374151;
+  border-radius: 3px;
+}
+
+/* Typewriter Input Fields */
+.typewriter-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(110, 100, 90, 0.4);
+  color: var(--text-dark);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  padding: 8px 4px;
+  width: 100%;
+  transition: border-bottom-color 0.2s ease;
+}
+
+.typewriter-input:focus {
+  outline: none;
+  border-bottom: 2px solid var(--accent-ribbon);
+}
+
+.typewriter-textarea {
+  background: transparent;
+  border: none;
+  color: var(--text-dark);
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 24px;
+  width: 100%;
+  resize: vertical;
+  min-height: 200px;
+}
+
+.typewriter-textarea:focus {
+  outline: none;
+}
+
+/* Manila Folder file dropzone */
+.manila-dropzone {
+  background: #f1ddb0;
+  border: 2px dashed #c4aa71;
+  border-radius: 8px;
+  padding: 24px;
+  color: #5c4e33;
+  text-align: center;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+
+.manila-dropzone:hover {
+  background: #ebd4a0;
+  border-color: #b09559;
+}
+
+/* Vintage Button */
+.btn-vintage {
+  background: linear-gradient(135deg, #7c2d12, #4c1d95);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 600;
+  padding: 12px 24px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 
+    0 4px 6px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-vintage:hover {
+  transform: translateY(-1px);
+  box-shadow: 
+    0 6px 12px rgba(0,0,0,0.4),
+    0 0 10px rgba(139, 92, 246, 0.4);
+  filter: brightness(1.1);
+}
+
+.btn-vintage:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* --- Reader View Skeuomorphic Split Screen --- */
+.reader-container {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  height: calc(100vh - 84px);
+  overflow: hidden;
+  background: rgba(0,0,0,0.2);
+}
+
+@media (max-width: 950px) {
+  .reader-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1.2fr;
+  }
+}
+
+/* LEFT PANE - Physical Book Page */
+.book-pane {
+  background-color: var(--paper-cream);
+  overflow-y: auto;
+  padding: 60px 50px;
+  color: var(--text-dark);
+  font-family: var(--font-serif);
+  box-shadow: 
+    inset -30px 0 40px rgba(0,0,0,0.06), /* Center spine fold shadow */
+    5px 0 15px rgba(0,0,0,0.15);
+  position: relative;
+  border-right: 1px solid rgba(0,0,0,0.15);
+}
+
+/* Ribbon Bookmark Line Sync Indicator */
+.bookmark-ribbon {
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 100%;
+  background: var(--accent-ribbon);
+  box-shadow: 
+    0 4px 8px rgba(0,0,0,0.3),
+    0 0 8px var(--accent-ribbon-glow);
+  left: 20px;
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  z-index: 10;
+  border-radius: 0 0 3px 3px;
+}
+
+.bookmark-ribbon::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 7px solid var(--paper-cream); /* V-shape notch cut */
+}
+
+/* Styled Paragraph Items inside Book */
+.book-paragraph {
+  padding: 16px 24px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  font-size: 17px;
+  line-height: 1.8;
+  color: #3e3730;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.book-paragraph:hover {
+  background: rgba(0, 0, 0, 0.02);
+  color: #12100e;
+}
+
+.book-paragraph.active {
+  background: rgba(189, 44, 44, 0.05);
+  color: #000;
+  font-weight: 550;
+  /* Red book binding highlights */
+  border-left: 4px solid var(--accent-ribbon);
+  transform: translateX(4px);
+}
+
+/* RIGHT PANE - Continuous Webtoon Stream */
+.device-pane {
+  overflow-y: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #09090b;
+  height: 100%;
+}
+
+.webtoon-stream-container {
+  width: 100%;
+  max-width: 500px; /* Standard reading width for vertical manhwa */
+  display: flex;
+  flex-direction: column;
+  background: #000000;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+  min-height: 100%;
+}
+
+/* Manhwa Panel Card */
+.manhwa-card {
+  width: 100%;
+  position: relative;
+  background: #111215;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid #000; /* border divider between chapters */
+  flex-shrink: 0;
+}
+
+/* Highlight panel card if matching active paragraph */
+.manhwa-card.active-panel {
+  filter: brightness(1.05);
+}
+
+.manhwa-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Text overlays on manhwa panels */
+.dialogue-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.3) 80%, transparent 100%);
+  padding: 24px 16px 16px 16px;
+  display: flex;
+  justify-content: center;
+}
+
+.dialogue-text {
+  background: #ffffff;
+  color: #000000;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 6px 12px;
+  border-radius: 14px;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0px #000000;
+  text-align: center;
+  max-width: 85%;
+}
+
+/* Shimmer panel inside smartphone mock */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #111215 25%,
+    #1e2025 50%,
+    #111215 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer-anim 1.5s infinite;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted-light);
+  padding: 20px;
+}
+
+.shimmer-text {
+  font-family: var(--font-display);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a78bfa;
+}
+
+/* Error card layout inside smartphone */
+.error-panel {
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  color: #ef4444;
+}
+
+.btn-retry-vintage {
+  background: transparent;
+  border: 1px solid #ef4444;
+  color: #fff;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-retry-vintage:hover {
+  background: #ef4444;
+}
+
+/* --- Bookshelf Archive System --- */
+.bookshelf-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 700;
+  color: #ebd4a0;
+  margin-bottom: 12px;
+  border-bottom: 2px dashed rgba(235, 212, 160, 0.2);
+  padding-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bookshelf-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 36px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.shelf-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px 16px 6px 16px;
+  position: relative;
+  border-bottom: 14px solid #3d2516; /* Wood Plank */
+  box-shadow: 0 8px 12px rgba(0,0,0,0.4);
+  border-radius: 0 0 4px 4px;
+}
+
+.shelf-row::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.5); /* Shadow under wood shelf */
+}
+
+/* Individual Book Spines standing on Shelf */
+.book-spine-cover {
+  width: 90px;
+  height: 130px;
+  border-radius: 2px 4px 4px 2px;
+  box-shadow: 
+    3px 3px 8px rgba(0,0,0,0.4),
+    inset 2px 0 0 rgba(255,255,255,0.15);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border-left: 4px solid rgba(0, 0, 0, 0.3);
+  transform-origin: bottom center;
+}
+
+.book-spine-cover:hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 
+    6px 12px 20px rgba(0,0,0,0.6),
+    inset 2px 0 0 rgba(255,255,255,0.25);
+  z-index: 10;
+}
+
+/* Standalone book cover backgrounds */
+.book-purple { background: linear-gradient(135deg, #6366f1, #312e81); }
+.book-red { background: linear-gradient(135deg, #991b1b, #450a0a); }
+.book-green { background: linear-gradient(135deg, #065f46, #022c22); }
+.book-amber { background: linear-gradient(135deg, #b45309, #78350f); }
+
+.book-title {
+  font-family: var(--font-serif);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
+
+.book-date {
+  font-size: 8px;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.btn-book-delete {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 15;
+}
+
+.book-spine-cover:hover .btn-book-delete {
+  opacity: 1;
+}
+
+.btn-book-delete:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* --- Document Manuscript Pages Preview Board --- */
+.corkboard {
+  background-color: #3e3126;
+  background-image: 
+    radial-gradient(rgba(0,0,0,0.15) 15%, transparent 16%),
+    radial-gradient(rgba(0,0,0,0.15) 15%, transparent 16%);
+  background-size: 16px 16px;
+  background-position: 0 0, 8px 8px;
+  border: 14px solid #23160e;
+  border-radius: 12px;
+  box-shadow: 
+    inset 0 0 30px rgba(0,0,0,0.65),
+    0 10px 20px rgba(0,0,0,0.5);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  max-height: 520px;
+  overflow-y: auto;
+}
+
+/* Lined Manuscript Page Sheet */
+.manuscript-sheet {
+  background: var(--paper-cream);
+  background-image: 
+    linear-gradient(rgba(220, 205, 185, 0.25) 1px, transparent 1px);
+  background-size: 100% 24px;
+  border-radius: 3px;
+  border-left: 28px solid rgba(0, 0, 0, 0.04); /* Left margin fold */
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 
+    0 8px 20px rgba(0,0,0,0.35),
+    -4px 4px 0px rgba(0,0,0,0.15);
+  padding: 30px 40px;
+  color: var(--text-dark);
+  font-family: var(--font-serif);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 320px;
+  transition: all 0.3s ease;
+}
+
+.manuscript-sheet:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 28px rgba(0,0,0,0.45),
+    -6px 6px 0px rgba(0,0,0,0.2);
+}
+
+.sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px dashed rgba(110, 100, 90, 0.2);
+  padding-bottom: 8px;
+}
+
+.sheet-num {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sheet-textarea {
+  background: transparent;
+  border: none;
+  width: 100%;
+  height: 180px;
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--text-dark);
+  resize: vertical;
+}
+
+.sheet-textarea:focus {
+  outline: none;
+}
+
+/* Actions footer on sheets */
+.sheet-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px dashed rgba(110, 100, 90, 0.15);
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+.btn-sheet-action {
+  background: transparent;
+  border: 1px solid rgba(110, 100, 90, 0.3);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-family: var(--font-serif);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.btn-sheet-action.crop {
+  color: #1d4ed8;
+  border-color: rgba(29, 78, 216, 0.3);
+}
+
+.btn-sheet-action.crop:hover {
+  background: #eff6ff;
+  border-color: #1d4ed8;
+}
+
+.btn-sheet-action.delete {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.3);
+}
+
+.btn-sheet-action.delete:hover {
+  background: #fef2f2;
+  border-color: #b91c1c;
+}
+
+
+/* --- Comic Speech Bubbles & Narration Overlay System --- */
+.manhwa-card-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.comic-overlays-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Let clicks pass through to container */
+  z-index: 10;
+}
+
+/* Rounded Speech Bubble */
+.comic-bubble {
+  position: absolute;
+  background: #ffffff;
+  border: 2.5px solid #000000;
+  border-radius: 18px;
+  padding: 8px 12px;
+  max-width: 75%;
+  min-width: 90px;
+  box-shadow: 3px 3px 0px rgba(0,0,0,0.15);
+  pointer-events: auto; /* Allow interactions if needed */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  z-index: 12;
+}
+
+.comic-bubble-text {
+  font-family: 'Comic Neue', 'Chilanka', cursive, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #000000;
+  text-transform: uppercase; /* Comic books usually use uppercase */
+}
+
+/* Speech Bubble Positions */
+.bubble-pos-left {
+  top: 15%;
+  left: 10%;
+}
+
+.bubble-pos-right {
+  bottom: 25%;
+  right: 10%;
+}
+
+/* Speech Bubble Tails pointing down */
+.bubble-tail-left::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 16px;
+  border-width: 10px 10px 0 0;
+  border-style: solid;
+  border-color: #ffffff transparent;
+  display: block;
+  width: 0;
+}
+
+.bubble-tail-left::before {
+  content: '';
+  position: absolute;
+  bottom: -13px;
+  left: 15px;
+  border-width: 11px 11px 0 0;
+  border-style: solid;
+  border-color: #000000 transparent;
+  display: block;
+  width: 0;
+}
+
+.bubble-tail-right::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: 16px;
+  border-width: 10px 0 0 10px;
+  border-style: solid;
+  border-color: #ffffff transparent;
+  display: block;
+  width: 0;
+}
+
+.bubble-tail-right::before {
+  content: '';
+  position: absolute;
+  bottom: -13px;
+  right: 15px;
+  border-width: 11px 0 0 11px;
+  border-style: solid;
+  border-color: #000000 transparent;
+  display: block;
+  width: 0;
+}
+
+/* Rectangular Narration Card */
+.comic-narration {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #fffdf2; /* Parchment Yellow */
+  border: 2.5px solid #000000;
+  padding: 6px 10px;
+  max-width: 80%;
+  box-shadow: 3.5px 3.5px 0px #000000;
+  pointer-events: auto;
+  z-index: 11;
+  display: flex;
+  flex-direction: column;
+}
+
+.comic-narration-text {
+  font-family: 'Comic Neue', 'Chilanka', cursive, sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #000000;
+  font-style: italic;
+}
+
+/* --- Full Screen Comic Mode CSS Overrides --- */
+.reader-container.full-comic-mode .book-pane {
+  display: none !important;
+}
+
+.reader-container.full-comic-mode .device-pane {
+  flex: 1 !important;
+  width: 100% !important;
+}
+
+.reader-container.full-comic-mode .webtoon-stream-container {
+  max-width: 600px; /* Expands panels slightly for premium full page desktop readability */
+}
+
+
